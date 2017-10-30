@@ -38,12 +38,3 @@ class dbhandler(object):
     def close(self):
         self.conn.close()
 
-kluntung = dbhandler('mayam.db')
-print (kluntung.show_revenue('pelanggan'))
-"""
-kluntung.insert_value('pelanggan',['teh','ayam'],192)
-kluntung.insert_value('pelanggan',['teh','ayam'],192)
-kluntung.delete_all('pelanggan')
-"""
-kluntung = dbhandler('mayam.db')
-kluntung.show_value('pelanggan')
