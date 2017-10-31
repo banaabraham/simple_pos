@@ -14,6 +14,63 @@ import sys
 DATABASE = 'mayam.db'
 TABLE = 'pelanggan'
 
+class login(object):
+    def setupUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(213, 153)
+        self.gridLayout = QtWidgets.QGridLayout(Dialog)
+        self.gridLayout.setObjectName("gridLayout")
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.gridLayout.addLayout(self.verticalLayout, 0, 0, 2, 3)
+        self.label = QtWidgets.QLabel(Dialog)
+        self.label.setObjectName("label")
+        self.gridLayout.addWidget(self.label, 1, 1, 1, 1)
+        self.username = QtWidgets.QLineEdit(Dialog)
+        self.username.setObjectName("username")
+        self.gridLayout.addWidget(self.username, 1, 2, 1, 1)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.gridLayout.addLayout(self.verticalLayout_2, 2, 0, 2, 3)
+        self.label_2 = QtWidgets.QLabel(Dialog)
+        self.label_2.setObjectName("label_2")
+        self.gridLayout.addWidget(self.label_2, 3, 1, 1, 1)
+        self.password = QtWidgets.QLineEdit(Dialog)
+        self.password.setObjectName("password")
+        self.password.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.gridLayout.addWidget(self.password, 3, 2, 1, 1)
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.login = QtWidgets.QPushButton(Dialog)
+        self.login.setObjectName("login")
+        self.verticalLayout_3.addWidget(self.login)
+        self.gridLayout.addLayout(self.verticalLayout_3, 4, 1, 2, 2)
+        
+        self.retranslateUi(Dialog)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+        self.Dialog = Dialog
+        self.login.clicked.connect(self.verify)
+
+    def verify(self):
+        if self.username.text()=="kasir" and self.password.text()=="password":
+            self.Dialog.accept()
+        else:
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Information)
+            msg.setText('username atau password salah')
+            msg.setWindowTitle('Failed')
+            msg.exec_()
+            
+                        
+        
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Login Kasir"))
+        self.label.setText(_translate("Dialog", "Username"))
+        self.label_2.setText(_translate("Dialog", "Password"))
+        self.login.setText(_translate("Dialog", "Login"))
+
+
 class send_email(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
@@ -76,7 +133,7 @@ class send_email(object):
 class warningDB(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(214, 134)
+        Dialog.resize(200, 100)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.gridLayout = QtWidgets.QGridLayout()
@@ -105,7 +162,7 @@ class warningDB(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Warning"))
-        self.label.setText(_translate("Dialog", "Apakah anda yakin?"))
+        self.label.setText(_translate("Dialog", "\tApakah anda yakin?"))
 
                
 
@@ -292,6 +349,11 @@ class Ui_MainWindow(object):
             self.tableWidget.setRowCount(self.tableWidget.rowCount()-1)
             self.inputItem.clear()
             self.inputJumlah.clear()
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Information)
+            msg.setText('Item tidak ditemukan!')
+            msg.setWindowTitle('Failed')
+            msg.exec_()
 
     def hitung(self):
         total = sum(self.jumlahHarga)
@@ -347,9 +409,15 @@ class Ui_MainWindow(object):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
+    dialog = QtWidgets.QDialog()
+    dialog.ui = login()
+    dialog.ui.setupUi(dialog)
+    dialog.show()        
+    if dialog.exec_() == QtWidgets.QDialog.Accepted:     
+        MainWindow = QtWidgets.QMainWindow()
+        ui = Ui_MainWindow()
+        ui.setupUi(MainWindow)
+        MainWindow.show()
+        sys.exit(app.exec_())
+
 
