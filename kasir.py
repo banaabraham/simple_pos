@@ -108,11 +108,12 @@ class send_email(object):
         db = dbhandler.dbhandler(DATABASE)
         revenue = db.show_daily_revenue(TABLE)
         db.close()
-        emailfrom = "bana.abraham@gmail.com"
+        cred = (open('credentials.txt')).readline().split(" ")
+        emailfrom = cred[0]
         emailto = str(self.email.text())
-        fileToSend = "mayam.db"
-        username = "bana.abraham"
-        password = "julisabana"
+        fileToSend = DATABASE
+        username = cred[1]
+        password = cred[2]
         subject = "Laporan, Today Revenue: Rp %s,00" %(str(revenue))
         message = "Revenue: %s" %(str(revenue))
         try:
@@ -125,7 +126,7 @@ class send_email(object):
         except :
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Information)
-            msg.setText('gagal terkirim')
+            msg.setText('gagal terkirim, cek koneksi')
             msg.setWindowTitle('Failed')
             msg.exec_()
                 
@@ -164,13 +165,65 @@ class warningDB(object):
         Dialog.setWindowTitle(_translate("Dialog", "Warning"))
         self.label.setText(_translate("Dialog", "\tApakah anda yakin?"))
 
+class table(object):
+    def setupUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(457, 270)
+        self.gridLayout_3 = QtWidgets.QGridLayout(Dialog)
+        self.gridLayout_3.setObjectName("gridLayout_3")
+        self.gridLayout_2 = QtWidgets.QGridLayout()
+        self.gridLayout_2.setObjectName("gridLayout_2")
+        self.gridLayout_3.addLayout(self.gridLayout_2, 0, 0, 2, 2)
+        self.tableWidget = QtWidgets.QTableWidget(Dialog)
+        self.tableWidget.setObjectName("tableWidget")
+        self.tableWidget.setColumnCount(4)
+        self.tableWidget.setRowCount(0)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(0, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(1, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(2, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(3, item)
+        self.gridLayout_3.addWidget(self.tableWidget, 1, 1, 1, 1)
+
+        self.retranslateUi(Dialog)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+        
+        
+        db = dbhandler.dbhandler(DATABASE)
+        size = db.get_size('pelanggan')
+        datas = db.get_value('pelanggan')
+        
+        for data in datas:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount()+1)
+            for i in range(len(data)):
+                item = QtWidgets.QTableWidgetItem()
+                if data[i]==None:
+                    item.setText("-")
+                else:
+                    item.setText(str(data[i]))
+                self.tableWidget.setItem(self.tableWidget.rowCount()-1,i,item)
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Database"))
+        item = self.tableWidget.horizontalHeaderItem(0)
+        item.setText(_translate("Dialog", "ID"))
+        item = self.tableWidget.horizontalHeaderItem(1)
+        item.setText(_translate("Dialog", "Pesanan"))
+        item = self.tableWidget.horizontalHeaderItem(2)
+        item.setText(_translate("Dialog", "Jumlah"))
+        item = self.tableWidget.horizontalHeaderItem(3)
+        item.setText(_translate("Dialog", "Waktu"))
                
 
 class Ui_MainWindow(object):
     def __init__(self):
-        self.jumlahHarga = []
         self.usedRow = 0
-        self.pesanan = []
+        self.pesanan = dict()
+        self.jumlahHarga = []
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(666, 614)
@@ -239,9 +292,6 @@ class Ui_MainWindow(object):
         self.inputItem = QtWidgets.QLineEdit(self.centralwidget)
         self.inputItem.setObjectName("inputItem")
         self.gridLayout_4.addWidget(self.inputItem, 3, 6, 1, 1)
-        self.hitung_total = QtWidgets.QPushButton(self.centralwidget)
-        self.hitung_total.setObjectName("hitung_total")
-        self.gridLayout_4.addWidget(self.hitung_total, 4, 6, 1, 1)
         self.checkOut = QtWidgets.QPushButton(self.centralwidget)
         self.checkOut.setObjectName("checkOut")
         self.gridLayout_4.addWidget(self.checkOut, 5, 5, 1, 1)
@@ -266,6 +316,10 @@ class Ui_MainWindow(object):
         self.actionSend_DB = QtWidgets.QAction(MainWindow)
         self.actionSend_DB.setObjectName("actionSend_DB")
         self.menuMenu.addAction(self.actionSend_DB)
+        self.actionShow_DB = QtWidgets.QAction(MainWindow)
+        self.actionShow_DB.setObjectName("actionShow_DB")
+        self.menuMenu.addAction(self.actionShow_DB)
+    
         
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -283,7 +337,6 @@ class Ui_MainWindow(object):
         """
         
         self.tambah.clicked.connect(self.addRow)
-        self.hitung_total.clicked.connect(self.hitung)
         self.checkOut.clicked.connect(self.cetak)
         self.clear.clicked.connect(self.hapus)
 
@@ -292,7 +345,16 @@ class Ui_MainWindow(object):
         """
         self.actionClear_DB.triggered.connect(self.warningForm)
         self.actionSend_DB.triggered.connect(self.sendDB)
+        self.actionShow_DB.triggered.connect(self.showDB)
 
+    def showDB(self):
+            
+        dialog = QtWidgets.QDialog()
+        dialog.ui = table()
+        dialog.ui.setupUi(dialog)
+        dialog.show()
+        dialog.exec_()    
+    
     def sendDB(self):
         dialog = QtWidgets.QDialog()
         dialog.ui = send_email()
@@ -327,25 +389,46 @@ class Ui_MainWindow(object):
     def addRow(self):
         try:
             self.tableWidget.setRowCount(self.tableWidget.rowCount()+1)
-            item = self.inputItem.text()
+            item = self.inputItem.text().strip()
             jumlah = self.inputJumlah.text()
-            self.pesanan.append(str(item)+" "+str(jumlah))
             harga = self.hitung_harga(item)
-            jumlah_harga = int(jumlah)*int(harga)           
-            data = [str(item),str(jumlah),str(harga),str(jumlah_harga)]
-            self.jumlahHarga.append(jumlah_harga)
-            for i in range(4):
-                item = QtWidgets.QTableWidgetItem()
-                if data[i]==None:
-                    item.setText("-")
-                else:
-                    item.setText(data[i])
-                self.tableWidget.setItem(self.usedRow,i,item)
-            self.usedRow +=1
-            self.inputItem.clear()
-            self.inputJumlah.clear()
-        except:
-            self.pesanan.pop()
+            if item not in self.pesanan:
+                self.pesanan[item] = [int(jumlah),self.usedRow]                
+                jumlah_harga = int(jumlah)*int(harga)           
+                data = [str(item),str(jumlah),str(harga),str(jumlah_harga)]
+                
+                for i in range(4):
+                    item = QtWidgets.QTableWidgetItem()
+                    if data[i]==None:
+                        item.setText("-")
+                    else:
+                        item.setText(data[i])
+                    self.tableWidget.setItem(self.usedRow,i,item)
+                    
+                self.usedRow +=1
+                self.inputItem.clear()
+                self.inputJumlah.clear()
+                               
+            else:
+                self.pesanan[item] = [int(self.pesanan[item][0])+int(jumlah),self.pesanan[item][1]]
+                jumlahPesanan = self.pesanan[item][0]
+                pesananRow = self.pesanan[item][1]
+                jumlah_harga = int(self.pesanan[item][0])*int(harga)           
+                data = [str(item),str(jumlahPesanan),str(harga),str(jumlah_harga)]               
+                for i in range(4):
+                    item = QtWidgets.QTableWidgetItem()
+                    if data[i]==None:
+                        item.setText("-")
+                    else:
+                        item.setText(data[i])
+                    self.tableWidget.setItem(pesananRow,i,item)
+                    
+                self.tableWidget.setRowCount(self.tableWidget.rowCount()-1)
+                self.inputItem.clear()
+                self.inputJumlah.clear()
+                
+        except Exception as e:
+            print(e)
             self.tableWidget.setRowCount(self.tableWidget.rowCount()-1)
             self.inputItem.clear()
             self.inputJumlah.clear()
@@ -354,10 +437,13 @@ class Ui_MainWindow(object):
             msg.setText('Item tidak ditemukan!')
             msg.setWindowTitle('Failed')
             msg.exec_()
-
-    def hitung(self):
-        total = sum(self.jumlahHarga)
+        
+        harga = list(map(self.hitung_harga,self.pesanan.keys()))
+        jumlah = [v[0] for v in self.pesanan.values()]
+        total = sum([int(harga[i])*int(jumlah[i]) for i in range(len(harga))]) 
+        #total = sum(self.jumlahHarga)
         self.total.setText(str(total))
+
 
     def cetak(self):
         total = int(self.total.text())
@@ -366,8 +452,13 @@ class Ui_MainWindow(object):
 
     def write_db(self):
         db = dbhandler.dbhandler(DATABASE)
-        db.insert_value(TABLE,self.pesanan,sum(self.jumlahHarga))
-        self.pesanan = []
+
+        pesanan = []
+        for k in self.pesanan:
+            pesanan.append(k+" "+str(self.pesanan[k][0]))
+            
+        db.insert_value(TABLE,pesanan,int(self.total.text()))
+        self.pesanan = dict()
         self.jumlahHarga = []
         db.close()
         
@@ -399,12 +490,12 @@ class Ui_MainWindow(object):
         self.label.setText(_translate("MainWindow", "        Item"))
         self.label_2.setText(_translate("MainWindow", "jumlah"))
         self.tambah.setText(_translate("MainWindow", "Tambah"))
-        self.hitung_total.setText(_translate("MainWindow", "Hitung Total"))
         self.checkOut.setText(_translate("MainWindow", "Checkout"))
         self.clear.setText(_translate("MainWindow", "Submit + Clear"))
         self.menuMenu.setTitle(_translate("MainWindow", "Menu"))
         self.actionClear_DB.setText(_translate("MainWindow", "Clear DB"))
         self.actionSend_DB.setText(_translate("MainWindow","Send DB"))
+        self.actionShow_DB.setText(_translate("MainWindow","Show DB"))
 
 if __name__ == "__main__":
     import sys
