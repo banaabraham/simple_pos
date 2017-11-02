@@ -8,11 +8,6 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 
-emailfrom = "bana.abraham@gmail.com"
-emailto = "doddbenjamin@yahoo.com"
-fileToSend = "mayam.db"
-username = "bana.abraham"
-password = "julisabana"
 
 def send_mail(emailfrom,emailto,fileToSend,username,password,subject,message):
     msg = MIMEMultipart()
